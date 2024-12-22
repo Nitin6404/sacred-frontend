@@ -1,0 +1,30 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Create Empty Commit on Behalf of the Nexus Solutions Bot
+        run: |
+          git config --global user.email "sacredshaadi@gmail.com"
+          git config --global user.name "sacredshaadi"
+          git commit --allow-empty -m "$(git log -1 --pretty=%B)"
+
+      - name: Push Empty Commit to Main Branch
+        run: |
+          git push origin main
