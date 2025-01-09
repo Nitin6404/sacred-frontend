@@ -23,6 +23,36 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <GoogleTagManager gtmId={"GTM-K5MNQ742"} />
       <Head>
         <meta name="google-site-verification" content="oZg_Uh-QP5zqnHG4-yH-CPsQfb8mnhNakZlHDewYEgs" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap"
+          rel="stylesheet"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+        <link href="https://fonts.maateen.me/bangla/font.css" rel="stylesheet" />
+        <link href="https://fonts.maateen.me/solaiman-lipi/font.css" rel="stylesheet" />
+        <link href="https://fonts.maateen.me/kalpurush/font.css" rel="stylesheet" />
+        <link href="https://fonts.maateen.me/siyam-rupali/font.css" rel="stylesheet" />
+        <link href="https://fonts.maateen.me/adorsho-lipi/font.css" rel="stylesheet" />
+        <link href="https://fonts.maateen.me/mukti/font.css" rel="stylesheet" />
+        <style>
+          {`
+            @font-face {
+              font-family: 'Nikosh';
+              src: url('/fonts/Nikosh.ttf') format('truetype');
+            }
+            @font-face {
+              font-family: 'Akaash';
+              src: url('/fonts/Akaash.ttf') format('truetype');
+            }
+            @font-face {
+              font-family: 'Shonar Bangla';
+              src: url('/fonts/Shonar Bangla.ttf') format('truetype');
+            }
+          `}
+        </style>
       </Head>
 
       <body className={cn(font.className, "min-h-screen overflow-auto")}>
@@ -36,9 +66,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </noscript>
         <NextTopLoader showSpinner={false} color="#E11D48" />
         <Providers>
-          <Toaster />
           {children}
-
+          <Toaster />
           <TawkToWidget />
         </Providers>
       </body>

@@ -114,4 +114,17 @@ export const categoryEndpoints = {
   getAllCategories: "/api/v1/category/all"
 } as const;
 
+export const templateEndpoints = {
+  getAllTemplates: "/templates",
+  getTemplateById: "/templates/:id",
+  createTemplate: "/templates",
+  updateTemplate: "/templates/:id",
+  deleteTemplate: "/templates/:id",
+  getFeaturedTemplates: "/templates/featured",
+  getTemplateCategories: "/templates/categories",
+  saveCustomization: "/templates/customization",
+  generatePDF: "/templates/:id/pdf",
+  share: "/templates/:id/share"
+} as const;
+
 export const cloudinaryUrl = `cloudinary://${process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY}:${process.env.CLOUDINARY_API_SECRET}@${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}`;
