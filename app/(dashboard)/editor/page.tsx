@@ -1,8 +1,7 @@
 import { Metadata } from "next";
-import EditorCanvas from "./_components/EditorCanvas";
-import EditorToolbar from "./_components/EditorToolbar";
-import EditorSidebar from "./_components/EditorSidebar";
-import PageNavigator from "./_components/PageNavigator";
+import { TemplateSelector } from "./_components/TemplateSelector";
+import { EditorCanvas } from "./_components/EditorCanvas/EditorCanvas";
+import { CustomizationPanel } from "./_components/CustomizationPanel";
 
 export const metadata: Metadata = {
   title: "Template Editor - Sacred Shadi",
@@ -11,23 +10,16 @@ export const metadata: Metadata = {
 
 export default function EditorPage() {
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Left Sidebar - Tools */}
-      <EditorToolbar />
-
-      {/* Main Content Area */}
-      <div className="flex flex-1 flex-col">
-        {/* Top Bar - Page Navigation */}
-        <PageNavigator />
-
-        {/* Canvas Area */}
-        <div className="flex-1 overflow-hidden">
-          <EditorCanvas />
-        </div>
+    <div className="flex h-full">
+      <div className="w-64 border-r">
+        <TemplateSelector />
       </div>
-
-      {/* Right Sidebar - Properties */}
-      <EditorSidebar />
+      <div className="flex-1">
+        <EditorCanvas />
+      </div>
+      <div className="w-80 border-l">
+        <CustomizationPanel />
+      </div>
     </div>
   );
 }

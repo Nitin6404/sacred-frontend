@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useTemplates } from "@/hooks/useTemplates";
+import { Template } from "@/lib/api/template";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { useTemplates } from "@/hooks/useTemplates";
+import { useEffect, useState } from "react";
 import TemplatePreviewModal from "./TemplatePreviewModal";
-import { Template } from "@/lib/api/template";
 
 export default function TemplateGrid() {
   const searchParams = useSearchParams();

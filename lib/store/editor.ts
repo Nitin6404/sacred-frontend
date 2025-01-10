@@ -1,82 +1,6 @@
 import { create } from "zustand";
 import { v4 as uuidv4 } from "uuid";
-
-export interface Position {
-  x: number;
-  y: number;
-}
-
-export interface Size {
-  width: number;
-  height: number;
-}
-
-export interface ElementStyle {
-  fontFamily?: string;
-  fontSize?: number;
-  color?: string;
-  backgroundColor?: string;
-  position: Position;
-  size: Size;
-  rotation?: number;
-  zIndex?: number;
-}
-
-export interface EditorElement {
-  id: string;
-  type: "text" | "image" | "shape";
-  content: string;
-  style: ElementStyle;
-  language?: "en" | "bn";
-}
-
-export interface Page {
-  id: string;
-  elements: EditorElement[];
-  background?: string;
-  order: number;
-}
-
-export interface Music {
-  url: string;
-  type: "shehnai" | "rabindra";
-  volume: number;
-}
-
-interface EditorState {
-  pages: Page[];
-  currentPage: number;
-  selectedElement: EditorElement | null;
-  music?: Music;
-  history: Array<{
-    pages: Page[];
-    timestamp: number;
-  }>;
-  historyIndex: number;
-
-  // Page Actions
-  addPage: () => void;
-  deletePage: (index: number) => void;
-  reorderPage: (from: number, to: number) => void;
-  updatePageBackground: (pageId: string, background: string) => void;
-  setCurrentPage: (index: number) => void;
-
-  // Element Actions
-  addElement: (element: Omit<EditorElement, "id">) => void;
-  updateElement: (elementId: string, updates: Partial<EditorElement>) => void;
-  deleteElement: (elementId: string) => void;
-  setSelectedElement: (elementId: string | null) => void;
-  duplicateElement: (elementId: string) => void;
-
-  // Music Actions
-  setMusic: (music: Music) => void;
-  updateMusicVolume: (volume: number) => void;
-
-  // History Actions
-  undo: () => void;
-  redo: () => void;
-  saveState: () => void;
-}
+import { EditorElement, EditorState, Language, Music, Page } from "@/types/editor";
 
 export const useEditorStore = create<EditorState>((set, get) => ({
   pages: [
@@ -88,152 +12,167 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   ],
   currentPage: 0,
   selectedElement: null,
+  currentLanguage: "en",
   history: [],
-  historyIndex: -1,
+  currentHistoryIndex: -1,
+
+  // Language Actions
+  setLanguage: (language: Language) => set({ currentLanguage: language }),
 
   // Page Actions
-  addPage: () =>
-    set((state) => ({
+  setPages: (pages: Page[]) => set({ pages }),
+
+  addPage: () => {
+    const { pages } = get();
+    set({
       pages: [
-        ...state.pages,
+        ...pages,
         {
           id: uuidv4(),
           elements: [],
-          order: state.pages.length
+          order: pages.length
         }
       ]
-    })),
+    });
+  },
 
-  deletePage: (index) =>
-    set((state) => ({
-      pages: state.pages
-        .filter((_, i) => i !== index)
-        .map((page, i) => ({
-          ...page,
-          order: i
-        })),
-      currentPage: Math.min(state.currentPage, state.pages.length - 2)
-    })),
+  deletePage: (index: number) => {
+    const { pages } = get();
+    set({
+      pages: pages.filter((_, i) => i !== index)
+    });
+  },
 
-  reorderPage: (from, to) =>
-    set((state) => ({
-      pages: state.pages
-        .map((page, index) => {
-          if (index === from) return { ...page, order: to };
-          if (index === to) return { ...page, order: from };
-          return page;
-        })
-        .sort((a, b) => a.order - b.order)
-    })),
+  reorderPage: (from: number, to: number) => {
+    const { pages } = get();
+    const newPages = [...pages];
+    const [movedPage] = newPages.splice(from, 1);
+    newPages.splice(to, 0, movedPage);
+    set({ pages: newPages });
+  },
 
-  updatePageBackground: (pageId, background) =>
-    set((state) => ({
-      pages: state.pages.map((page) => (page.id === pageId ? { ...page, background } : page))
-    })),
+  updatePageBackground: (pageId: string, background: string) => {
+    const { pages } = get();
+    set({
+      pages: pages.map((page) => (page.id === pageId ? { ...page, background } : page))
+    });
+  },
 
-  setCurrentPage: (index) => set({ currentPage: index }),
+  setCurrentPage: (index: number) => set({ currentPage: index }),
 
   // Element Actions
-  addElement: (element) =>
-    set((state) => {
-      const currentPage = state.pages[state.currentPage];
-      const newElement = { ...element, id: uuidv4() };
-      return {
-        pages: state.pages.map((page) =>
-          page.id === currentPage.id ? { ...page, elements: [...page.elements, newElement] } : page
-        ),
-        selectedElement: newElement
-      };
-    }),
+  addElement: (element: Omit<EditorElement, "id">) => {
+    const { pages, currentPage } = get();
+    const newElement = { ...element, id: uuidv4() };
+    const newPages = [...pages];
+    newPages[currentPage].elements.push(newElement);
+    set({ pages: newPages });
+  },
 
-  updateElement: (elementId, updates) =>
-    set((state) => ({
-      pages: state.pages.map((page) => ({
+  updateElement: (elementId: string, updates: Partial<EditorElement>) => {
+    const { pages } = get();
+    set({
+      pages: pages.map((page) => ({
         ...page,
         elements: page.elements.map((element) => (element.id === elementId ? { ...element, ...updates } : element))
       }))
-    })),
+    });
+  },
 
-  deleteElement: (elementId) =>
-    set((state) => ({
-      pages: state.pages.map((page) => ({
+  updateElementTranslation: (elementId: string, language: Language, content: string) => {
+    const { pages } = get();
+    set({
+      pages: pages.map((page) => ({
+        ...page,
+        elements: page.elements.map((element) =>
+          element.id === elementId
+            ? {
+                ...element,
+                translations: {
+                  ...element.translations,
+                  [language]: content
+                }
+              }
+            : element
+        )
+      }))
+    });
+  },
+
+  deleteElement: (elementId: string) => {
+    const { pages } = get();
+    set({
+      pages: pages.map((page) => ({
         ...page,
         elements: page.elements.filter((element) => element.id !== elementId)
-      })),
-      selectedElement: null
-    })),
+      }))
+    });
+  },
 
-  setSelectedElement: (elementId) =>
-    set((state) => ({
-      selectedElement: elementId
-        ? state.pages[state.currentPage].elements.find((el) => el.id === elementId) || null
-        : null
-    })),
-
-  duplicateElement: (elementId) =>
-    set((state) => {
-      const currentPage = state.pages[state.currentPage];
-      const elementToDuplicate = currentPage.elements.find((el) => el.id === elementId);
-      if (!elementToDuplicate) return state;
-
-      const newElement = {
-        ...elementToDuplicate,
-        id: uuidv4(),
-        style: {
-          ...elementToDuplicate.style,
-          position: {
-            x: elementToDuplicate.style.position.x + 20,
-            y: elementToDuplicate.style.position.y + 20
-          }
-        }
-      };
-
-      return {
-        pages: state.pages.map((page) =>
-          page.id === currentPage.id ? { ...page, elements: [...page.elements, newElement] } : page
-        ),
-        selectedElement: newElement
-      };
-    }),
+  setSelectedElement: (elementId: string | null) => {
+    const { pages } = get();
+    const element = elementId ? pages.flatMap((p) => p.elements).find((e) => e.id === elementId) || null : null;
+    set({ selectedElement: element });
+  },
 
   // Music Actions
-  setMusic: (music) => set({ music }),
-  updateMusicVolume: (volume) =>
-    set((state) => ({
-      music: state.music ? { ...state.music, volume } : undefined
-    })),
+  setMusic: (music: Music) => set({ music }),
+
+  updateMusicTitle: (language: Language, title: string) => {
+    const { music } = get();
+    if (!music) return;
+    set({
+      music: {
+        ...music,
+        title: {
+          ...music.title,
+          [language]: title
+        }
+      }
+    });
+  },
+
+  updateMusicVolume: (volume: number) => {
+    const { music } = get();
+    if (!music) return;
+    set({
+      music: {
+        ...music,
+        volume
+      }
+    });
+  },
 
   // History Actions
-  saveState: () =>
-    set((state) => {
-      const newHistory = state.history.slice(0, state.historyIndex + 1);
-      return {
-        history: [
-          ...newHistory,
-          {
-            pages: JSON.parse(JSON.stringify(state.pages)),
-            timestamp: Date.now()
-          }
-        ],
-        historyIndex: newHistory.length
-      };
-    }),
+  saveState: () => {
+    const { pages, music, history, currentHistoryIndex } = get();
+    const newHistory = history.slice(0, currentHistoryIndex + 1);
+    newHistory.push({ pages: JSON.parse(JSON.stringify(pages)), music });
+    set({
+      history: newHistory,
+      currentHistoryIndex: newHistory.length - 1
+    });
+  },
 
-  undo: () =>
-    set((state) => {
-      if (state.historyIndex <= 0) return state;
-      return {
-        pages: JSON.parse(JSON.stringify(state.history[state.historyIndex - 1].pages)),
-        historyIndex: state.historyIndex - 1
-      };
-    }),
+  undo: () => {
+    const { currentHistoryIndex, history } = get();
+    if (currentHistoryIndex <= 0) return;
+    const previousState = history[currentHistoryIndex - 1];
+    set({
+      pages: previousState.pages,
+      music: previousState.music,
+      currentHistoryIndex: currentHistoryIndex - 1
+    });
+  },
 
-  redo: () =>
-    set((state) => {
-      if (state.historyIndex >= state.history.length - 1) return state;
-      return {
-        pages: JSON.parse(JSON.stringify(state.history[state.historyIndex + 1].pages)),
-        historyIndex: state.historyIndex + 1
-      };
-    })
+  redo: () => {
+    const { currentHistoryIndex, history } = get();
+    if (currentHistoryIndex >= history.length - 1) return;
+    const nextState = history[currentHistoryIndex + 1];
+    set({
+      pages: nextState.pages,
+      music: nextState.music,
+      currentHistoryIndex: currentHistoryIndex + 1
+    });
+  }
 }));
