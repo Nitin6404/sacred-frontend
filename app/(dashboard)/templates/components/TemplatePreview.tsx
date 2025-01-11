@@ -1,112 +1,70 @@
 "use client";
 
-import Image from "next/image";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Template } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { useTemplateQuery } from "@/app/_components/api/templates";
+import { LoadingSpinner } from "@/components/loading-spinner";
 
-interface Template {
-  _id: string;
-  name: string;
-  description: string;
-  previewImages: string[];
-  category: string[];
-  languages: string[];
-  culturalElements: string[];
+interface Props {
+  templateId: string;
 }
 
-interface TemplatePreviewProps {
-  template: Template;
-  onClose: () => void;
-}
+export function TemplatePreview({ templateId }: Props) {
+  const router = useRouter();
+  const { data: template, isLoading } = useTemplateQuery(templateId);
 
-export default function TemplatePreview({ template, onClose }: TemplatePreviewProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  if (isLoading) {
+    return <LoadingSpinner className="h-full w-full" />;
+  }
 
-  const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev === template.previewImages.length - 1 ? 0 : prev + 1));
-  };
-
-  const previousImage = () => {
-    setCurrentImageIndex((prev) => (prev === 0 ? template.previewImages.length - 1 : prev - 1));
-  };
+  if (!template) {
+    return <div>Template not found</div>;
+  }
 
   return (
-    <Dialog open onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-4xl">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="relative aspect-[3/4]">
-            <Image
-              src={template.previewImages[currentImageIndex]}
-              alt={`Preview ${currentImageIndex + 1}`}
-              fill
-              className="object-contain"
-            />
+    <div className="space-y-6">
+      <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+        <Image
+          src={template.thumbnailUrl}
+          alt={template.name}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          priority
+        />
+      </div>
 
-            {template.previewImages.length > 1 && (
-              <div className="absolute inset-0 flex items-center justify-between p-4">
-                <Button variant="secondary" size="icon" onClick={previousImage} className="rounded-full">
-                  ←
-                </Button>
-                <Button variant="secondary" size="icon" onClick={nextImage} className="rounded-full">
-                  →
-                </Button>
-              </div>
-            )}
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-bold">{template.name}</h2>
+          <p className="text-muted-foreground">{template.description}</p>
+        </div>
+
+        <div className="flex flex-wrap gap-4">
+          <div>
+            <h3 className="text-sm font-medium">Category</h3>
+            <p className="text-sm text-muted-foreground">{template.category}</p>
           </div>
-
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">{template.name}</h2>
-            <p className="text-gray-600">{template.description}</p>
-
-            <div className="space-y-2">
-              <h3 className="font-semibold">Available Languages</h3>
-              <div className="flex flex-wrap gap-2">
-                {template.languages.map((lang) => (
-                  <Badge key={lang} variant="secondary">
-                    {lang}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="font-semibold">Categories</h3>
-              <div className="flex flex-wrap gap-2">
-                {template.category.map((cat) => (
-                  <Badge key={cat} variant="outline">
-                    {cat}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            {template.culturalElements.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="font-semibold">Cultural Elements</h3>
-                <div className="flex flex-wrap gap-2">
-                  {template.culturalElements.map((element) => (
-                    <Badge key={element} variant="outline">
-                      {element}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <Button
-              className="w-full"
-              onClick={() => {
-                // TODO: Implement customize template functionality
-                console.log("Customize template:", template._id);
-              }}
-            >
-              Customize Template
-            </Button>
+          <div>
+            <h3 className="text-sm font-medium">Languages</h3>
+            <p className="text-sm text-muted-foreground">{template.languages.join(", ")}</p>
+          </div>
+          <div>
+            <h3 className="text-sm font-medium">Rating</h3>
+            <p className="text-sm text-muted-foreground">
+              {template.rating.toFixed(1)} ({template.views} views)
+            </p>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+
+        <div className="flex gap-4">
+          <Button onClick={() => router.push(`/templates/${template.id}/edit`)} className="flex-1">
+            Customize Template
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

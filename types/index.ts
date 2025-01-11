@@ -96,3 +96,96 @@ export interface Blog {
   createdAt: string;
   updatedAt: string;
 }
+
+// Template Types
+export type ElementType = "text" | "image" | "shape";
+export type Language = "en" | "bn";
+
+export interface TemplateCustomization {
+  previewImages: string[];
+  id: string;
+  name: string;
+  description: string;
+  category: string[];
+  languages: Language[];
+  rating: number;
+  views: number;
+  thumbnailUrl: string;
+  pages: {
+    id: string;
+    elements: {
+      id: string;
+      type: ElementType;
+      content: string;
+      style: {
+        fontFamily?: string;
+        fontSize?: number;
+        color?: string;
+        backgroundColor?: string;
+        position: {
+          x: number;
+          y: number;
+        };
+        size: {
+          width: number;
+          height: number;
+        };
+        rotation?: number;
+      };
+    }[];
+  }[];
+}
+
+export interface Template {
+  id: number;
+  name: string;
+  description: string;
+  thumbnailUrl: string;
+  previewImages: string[];
+  category: string[];
+  languages: Language[];
+  culturalElements?: string[];
+  isActive: boolean;
+  isFeatured: boolean;
+  tags: string[];
+  views: number;
+  rating: number;
+  previewConfig?: {
+    layout: string;
+    style: string;
+    components: any[];
+  };
+  customization?: TemplateCustomization;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TemplateFilters {
+  search?: string;
+  category?: string[];
+  languages?: Language[];
+  culturalElements?: string[];
+  minRating?: number;
+  priceRange?: [number, number];
+  isFeatured?: boolean;
+  sortBy?: "rating" | "views" | "createdAt" | "name";
+  sortOrder?: "asc" | "desc";
+  page?: number;
+  pageSize?: number;
+}
+
+export interface TemplateResponse {
+  templates: Template[];
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
+  hasNextPage: boolean;
+}
+
+export interface TemplateListResponse {
+  count: number;
+  rows: Template[];
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}

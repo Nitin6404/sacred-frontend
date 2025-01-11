@@ -1,222 +1,174 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTemplates } from "@/hooks/useTemplates";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Search, Filter, X } from "lucide-react";
-import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+export interface TemplateFilters {
+  category?: string;
+  languages?: string[];
+  culturalElements?: string[];
+  minRating?: number;
+  priceRange?: [number, number];
+  isFeatured?: boolean;
+  search?: string;
+  sortBy?: "rating" | "views" | "createdAt" | "name";
+  sortOrder?: "asc" | "desc";
+}
+
+interface TemplateFiltersProps {
+  onFilterChange: (filters: TemplateFilters) => void;
+  isLoading?: boolean;
+}
 
 const CATEGORIES = ["Wedding", "Engagement", "Reception"];
 const LANGUAGES = ["English", "Bengali"];
 const CULTURAL_ELEMENTS = ["Traditional", "Modern", "Fusion"];
-const PRICE_RANGE = { min: 0, max: 10000 };
+const SORT_OPTIONS = [
+  { value: "rating", label: "Rating" },
+  { value: "views", label: "Views" },
+  { value: "createdAt", label: "Date Added" },
+  { value: "name", label: "Name" }
+];
 
-export default function TemplateFilters() {
+export function TemplateFiltersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { applyFilters } = useTemplates();
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const currentFilters = {
-    category: searchParams.get("category") || "",
-    languages: searchParams.get("language") ? [searchParams.get("language")!] : [],
-    culturalElements: searchParams.get("culturalElement") ? [searchParams.get("culturalElement")!] : [],
-    minRating: searchParams.get("minRating") || "",
-    priceRange: [
-      Number(searchParams.get("minPrice")) || PRICE_RANGE.min,
-      Number(searchParams.get("maxPrice")) || PRICE_RANGE.max
-    ],
-    search: searchParams.get("search") || "",
-    isFeatured: searchParams.get("isFeatured") === "true"
+  const currentFilters: TemplateFilters = {
+    category: searchParams.get("category") || undefined,
+    languages: searchParams.get("language") ? [searchParams.get("language")!] : undefined,
+    culturalElements: searchParams.get("culturalElement") ? [searchParams.get("culturalElement")!] : undefined,
+    minRating: searchParams.get("minRating") ? Number(searchParams.get("minRating")) : undefined,
+    priceRange: searchParams.get("priceRange") ? JSON.parse(searchParams.get("priceRange")!) : undefined,
+    isFeatured: searchParams.get("isFeatured") === "true",
+    search: searchParams.get("search") || undefined,
+    sortBy: (searchParams.get("sortBy") as TemplateFilters["sortBy"]) || undefined,
+    sortOrder: (searchParams.get("sortOrder") as TemplateFilters["sortOrder"]) || undefined
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-    }, 300);
+  const handleFilterChange = useCallback(
+    (filters: TemplateFilters) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value === undefined || value === "" || value === null) {
+          params.delete(key);
+        } else {
+          params.set(key, typeof value === "object" ? JSON.stringify(value) : String(value));
+        }
+      });
+      router.push(`?${params.toString()}`);
+    },
+    [router, searchParams]
+  );
 
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  useEffect(() => {
-    if (debouncedSearch !== currentFilters.search) {
-      handleFilterChange("search", debouncedSearch);
-    }
-  }, [debouncedSearch]);
-
-  const handleFilterChange = (key: string, value: string | boolean | number[]) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (value === "" || value === false) {
-      params.delete(key);
-    } else if (Array.isArray(value)) {
-      params.set("minPrice", value[0].toString());
-      params.set("maxPrice", value[1].toString());
-    } else {
-      params.set(key, String(value));
-    }
-
-    router.push(`/templates?${params.toString()}`);
-    applyFilters(Object.fromEntries(params.entries()));
-  };
-
-  const clearFilters = () => {
-    setSearchTerm("");
-    router.push("/templates");
-    applyFilters({});
-  };
-
-  const FilterContent = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Filters</h2>
-        <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-primary">
-          Clear All
-          <X className="ml-2 h-4 w-4" />
-        </Button>
+  const FilterContent = ({ onFilterChange }: { onFilterChange: (filters: TemplateFilters) => void }) => (
+    <div className="space-y-4">
+      <div className="flex flex-col space-y-2">
+        <label className="text-sm font-medium">Sort By</label>
+        <div className="flex gap-2">
+          <Select
+            onValueChange={(value) => onFilterChange({ ...currentFilters, sortBy: value as TemplateFilters["sortBy"] })}
+            value={currentFilters.sortBy}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Sort by..." />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {currentFilters.sortBy && (
+            <Select
+              onValueChange={(value) =>
+                onFilterChange({ ...currentFilters, sortOrder: value as TemplateFilters["sortOrder"] })
+              }
+              value={currentFilters.sortOrder || "desc"}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="asc">Ascending</SelectItem>
+                <SelectItem value="desc">Descending</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search templates..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-
-        <div>
-          <h3 className="mb-3 text-sm font-medium">Price Range</h3>
-          <Slider
-            defaultValue={currentFilters.priceRange}
-            min={PRICE_RANGE.min}
-            max={PRICE_RANGE.max}
-            step={100}
-            onValueChange={(value) => handleFilterChange("priceRange", value)}
-          />
-          <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
-            <span>${currentFilters.priceRange[0]}</span>
-            <span>${currentFilters.priceRange[1]}</span>
-          </div>
-        </div>
-
-        <div>
-          <h3 className="mb-3 text-sm font-medium">Category</h3>
-          <div className="space-y-2">
-            {CATEGORIES.map((category) => (
-              <label key={category} className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="category"
-                  value={category}
-                  checked={currentFilters.category === category}
-                  onChange={() => handleFilterChange("category", category)}
-                  className={cn("form-radio", "text-primary", "border-primary", "focus:ring-primary")}
-                />
-                <span className="text-sm">{category}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <h3 className="mb-3 text-sm font-medium">Language</h3>
-          <div className="space-y-2">
-            {LANGUAGES.map((language) => (
-              <label key={language} className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="language"
-                  value={language}
-                  checked={currentFilters.languages.includes(language)}
-                  onChange={() => handleFilterChange("language", language)}
-                  className={cn("form-radio", "text-primary", "border-primary", "focus:ring-primary")}
-                />
-                <span className="text-sm">{language}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <h3 className="mb-3 text-sm font-medium">Cultural Elements</h3>
-          <div className="space-y-2">
-            {CULTURAL_ELEMENTS.map((element) => (
-              <label key={element} className="flex items-center space-x-2">
-                <input
-                  type="radio"
-                  name="culturalElement"
-                  value={element}
-                  checked={currentFilters.culturalElements.includes(element)}
-                  onChange={() => handleFilterChange("culturalElement", element)}
-                  className={cn("form-radio", "text-primary", "border-primary", "focus:ring-primary")}
-                />
-                <span className="text-sm">{element}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <h3 className="mb-3 text-sm font-medium">Rating</h3>
-          <select
-            value={currentFilters.minRating}
-            onChange={(e) => handleFilterChange("minRating", e.target.value)}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-          >
-            <option value="">Any Rating</option>
-            <option value="4">4+ Stars</option>
-            <option value="3">3+ Stars</option>
-            <option value="2">2+ Stars</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={currentFilters.isFeatured}
-              onChange={(e) => handleFilterChange("isFeatured", e.target.checked)}
-              className={cn("form-checkbox", "text-primary", "border-primary", "focus:ring-primary")}
+      {/* Existing filter components */}
+      <div className="block lg:hidden">
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Filter className="mr-2 h-4 w-4" />
+              Filters
+            </Button>
+          </SheetTrigger>
+          <SheetContent>
+            <TemplateFiltersComponent
+              onFilterChange={(filters) => {
+                handleFilterChange(filters);
+              }}
+              isLoading={false}
             />
-            <span className="text-sm">Featured Templates Only</span>
-          </label>
-        </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
+      <div className="hidden lg:block">
+        <TemplateFiltersComponent
+          onFilterChange={(filters) => {
+            handleFilterChange(filters);
+          }}
+          isLoading={false}
+        />
       </div>
     </div>
   );
 
   return (
     <>
-      {/* Mobile Filter Button */}
-      <div className="lg:hidden">
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <div className="block lg:hidden">
+        <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="w-full">
+            <Button variant="outline" size="sm">
               <Filter className="mr-2 h-4 w-4" />
               Filters
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-full max-w-xs">
-            <FilterContent />
+          <SheetContent>
+            <FilterContent onFilterChange={handleFilterChange} />
           </SheetContent>
         </Sheet>
       </div>
 
-      {/* Desktop Filters */}
       <div className="hidden lg:block">
-        <div className="rounded-lg border bg-card p-6">
-          <FilterContent />
-        </div>
+        <FilterContent onFilterChange={handleFilterChange} />
       </div>
     </>
   );
+}
+
+export function TemplateFiltersComponent({ onFilterChange, isLoading = false }: TemplateFiltersProps): JSX.Element {
+  const [filters, setFilters] = useState<TemplateFilters>({});
+
+  const handleFilterChange = useCallback(
+    (key: keyof TemplateFilters, value: any) => {
+      const newFilters = { ...filters, [key]: value };
+      setFilters(newFilters);
+      onFilterChange(newFilters);
+    },
+    [filters, onFilterChange]
+  );
+
+  return <div className="space-y-4">{/* Filter UI components */}</div>;
 }

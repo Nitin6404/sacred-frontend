@@ -1,6 +1,8 @@
 import { Metadata } from "next";
-import TemplateGrid from "./components/TemplateGrid";
-import TemplateFilters from "./components/TemplateFilters";
+import { TemplateGrid } from "./components/TemplateGrid";
+import { TemplateFiltersPage } from "./components/TemplateFilters";
+// import DndUploader from '@/app/_components/dnd-uploader';
+// import ImageUploader2 from '@/app/_components/image-uploader-2';
 
 export const metadata: Metadata = {
   title: "Wedding Templates | Sacred Shadi",
@@ -14,13 +16,24 @@ export default function TemplatesPage() {
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
         <div className="md:col-span-1">
-          <TemplateFilters />
+          <TemplateFiltersPage />
         </div>
 
         <div className="md:col-span-3">
           <TemplateGrid />
         </div>
       </div>
+
+      {/* <ImageUploader2
+    onImageUpload={(url) => setFormData(prev => ({ ...prev, thumbnailUrl: url }))}
+    updateParentState={(loading) => setIsLoading(loading)}
+/>
+
+// For preview images
+<DndUploader
+    onUpload={(urls) => setFormData(prev => ({ ...prev, previewImages: [...prev.previewImages, ...urls] }))}
+    maxFiles={5}
+/> */}
     </div>
   );
 }

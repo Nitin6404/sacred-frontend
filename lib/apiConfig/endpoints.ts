@@ -115,16 +115,26 @@ export const categoryEndpoints = {
 } as const;
 
 export const templateEndpoints = {
-  getAllTemplates: "/templates",
-  getTemplateById: "/templates/:id",
-  createTemplate: "/templates",
-  updateTemplate: "/templates/:id",
-  deleteTemplate: "/templates/:id",
-  getFeaturedTemplates: "/templates/featured",
-  getTemplateCategories: "/templates/categories",
-  saveCustomization: "/templates/customization",
-  generatePDF: "/templates/:id/pdf",
-  share: "/templates/:id/share"
+  // Template management
+  list: "/api/templates",
+  get: "/api/templates",
+  create: "/api/templates",
+  update: "/api/templates",
+  delete: "/api/templates",
+  featured: "/api/templates/featured",
+  categories: "/api/templates/categories",
+
+  // Template customization
+  customize: "/api/templates/customization",
+  preview: "/api/templates/preview",
+  generatePDF: "/api/templates/pdf",
+  publish: "/api/templates/publish",
+  share: "/api/templates/share",
+
+  // Template assets
+  uploadImage: "/api/templates/upload/image",
+  uploadFont: "/api/templates/upload/font",
+  uploadMusic: "/api/templates/upload/music"
 } as const;
 
 export const cloudinaryUrl = `cloudinary://${process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY}:${process.env.CLOUDINARY_API_SECRET}@${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}`;
