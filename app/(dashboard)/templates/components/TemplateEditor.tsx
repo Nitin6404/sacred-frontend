@@ -6,332 +6,243 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Undo2, Redo2, Type } from "lucide-react";
-import { useEditorStore } from "@/lib/editor";
-import { DndContext } from "@dnd-kit/core";
-import { DraggableElement } from "./DraggableElement";
+import { Undo2, Redo2, Type, Image as ImageIcon, Layout, Palette, Save } from "lucide-react";
+import { Template, TemplateCustomization } from "@/types";
 import { LoadingSpinner } from "@/components/loading-spinner";
-import {
-  DEFAULT_COLORS,
-  LANGUAGES,
-  BENGALI_FONTS,
-  ELEMENT_DEFAULTS,
-  ELEMENT_TYPES,
-  TEXT_ALIGNMENTS
-} from "@/constants/editor";
-import { useTemplateCustomizationMutation, useTemplatePublishMutation } from "@/app/_components/api/templates";
+import { useToast } from "@/components/ui/use-toast";
 
 interface TemplateEditorProps {
-  templateId: string;
-  templateName: string;
+  template: Template;
+  onSave: (data: TemplateCustomization) => Promise<void>;
+  onPublish: () => Promise<void>;
+  isSaving: boolean;
+  isPublishing: boolean;
 }
 
-export function TemplateEditor({ templateId, templateName }: TemplateEditorProps) {
-  const {
-    pages,
-    currentPage,
-    selectedElement,
-    addElement,
-    updateElement,
-    deleteElement,
-    setSelectedElement,
-    setCurrentPage,
-    addPage,
-    deletePage,
-    undo,
-    redo
-  } = useEditorStore();
+export function TemplateEditor({ template, onSave, onPublish, isSaving, isPublishing }: TemplateEditorProps) {
+  const [activeTab, setActiveTab] = useState("edit");
+  const [editHistory, setEditHistory] = useState<TemplateCustomization[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [customization, setCustomization] = useState<TemplateCustomization>({
+    templateId: template.id,
+    content: template.customization?.content || {},
+    style: template.customization?.style || {},
+    layout: template.customization?.layout || {}
+  });
+  const { toast } = useToast();
 
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [editedContent, setEditedContent] = useState("");
-  const [selectedLanguage, setSelectedLanguage] = useState<keyof typeof LANGUAGES>("en");
+  // History management
+  const addToHistory = (newState: TemplateCustomization) => {
+    const newHistory = editHistory.slice(0, historyIndex + 1);
+    newHistory.push(newState);
+    setEditHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
 
-  const { mutateAsync: saveTemplate, isPending: isSaving } = useTemplateCustomizationMutation();
-  const { mutateAsync: publishTemplate, isPending: isPublishing } = useTemplatePublishMutation();
+  const undo = () => {
+    if (historyIndex > 0) {
+      setHistoryIndex(historyIndex - 1);
+      setCustomization(editHistory[historyIndex - 1]);
+    }
+  };
+
+  const redo = () => {
+    if (historyIndex < editHistory.length - 1) {
+      setHistoryIndex(historyIndex + 1);
+      setCustomization(editHistory[historyIndex + 1]);
+    }
+  };
+
+  // Update handlers
+  const handleContentUpdate = (key: string, value: string) => {
+    const newCustomization = {
+      ...customization,
+      content: {
+        ...customization.content,
+        [key]: value
+      }
+    };
+    setCustomization(newCustomization);
+    addToHistory(newCustomization);
+  };
+
+  const handleStyleUpdate = (key: string, value: any) => {
+    const newCustomization = {
+      ...customization,
+      style: {
+        ...customization.style,
+        [key]: value
+      }
+    };
+    setCustomization(newCustomization);
+    addToHistory(newCustomization);
+  };
+
+  const handleLayoutUpdate = (key: string, value: any) => {
+    const newCustomization = {
+      ...customization,
+      layout: {
+        ...customization.layout,
+        [key]: value
+      }
+    };
+    setCustomization(newCustomization);
+    addToHistory(newCustomization);
+  };
 
   const handleSave = async () => {
     try {
-      await saveTemplate({
-        id: templateId
-        // Add other template data here
+      await onSave(customization);
+      toast({
+        title: "Success",
+        description: "Template saved successfully"
       });
     } catch (error) {
-      console.error("Failed to save template:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save template",
+        variant: "destructive"
+      });
     }
   };
-
-  const handlePublish = async () => {
-    try {
-      await publishTemplate({
-        id: templateId
-        // Add other template data here
-      });
-    } catch (error) {
-      console.error("Failed to publish template:", error);
-    }
-  };
-
-  // Handle text editing
-  const handleUpdateContent = useCallback(() => {
-    if (!selectedElement) return;
-    updateElement({
-      ...selectedElement,
-      content: editedContent,
-      language: selectedLanguage
-    });
-    setIsEditDialogOpen(false);
-  }, [selectedElement, editedContent, selectedLanguage, updateElement]);
-
-  // Handle style changes
-  const handleStyleChange = useCallback(
-    (property: keyof EditorElement["style"], value: any) => {
-      if (!selectedElement) return;
-      updateElement({
-        ...selectedElement,
-        style: {
-          ...selectedElement.style,
-          [property]: value
-        }
-      });
-    },
-    [selectedElement, updateElement]
-  );
-
-  // Add new text element
-  const handleAddText = useCallback(() => {
-    addElement({
-      type: ELEMENT_TYPES.TEXT,
-      content: "New Text",
-      language: selectedLanguage,
-      style: {
-        position: { x: 100, y: 100 },
-        size: { width: ELEMENT_DEFAULTS.text.width, height: ELEMENT_DEFAULTS.text.height },
-        fontSize: ELEMENT_DEFAULTS.text.fontSize,
-        fontFamily: ELEMENT_DEFAULTS.text.fontFamily,
-        color: DEFAULT_COLORS.text,
-        backgroundColor: DEFAULT_COLORS.background
-      }
-    });
-  }, [addElement, selectedLanguage]);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Template Title */}
-      <div className="flex items-center justify-between border-b p-4">
-        <h1 className="text-2xl font-bold">{templateName}</h1>
-        <div className="flex gap-2">
-          <Select
-            value={selectedLanguage}
-            onValueChange={(value: keyof typeof LANGUAGES) => setSelectedLanguage(value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Language" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(LANGUAGES).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="outline" onClick={handleAddText}>
-            <Type className="mr-2 h-4 w-4" />
-            Add Text
-          </Button>
-        </div>
-      </div>
-
-      {/* Page Navigation */}
-      <div className="mb-6 flex justify-center gap-4">
-        {pages.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentPage(index)}
-            className={cn(
-              "flex items-center rounded-full px-4 py-2",
-              currentPage === index ? "bg-primary text-white" : "bg-gray-100 hover:bg-gray-200"
-            )}
-          >
-            Page {index + 1}
-            <button
-              className="ml-2 text-xs hover:text-red-500"
-              onClick={(e) => {
-                e.stopPropagation();
-                deletePage(index);
-              }}
-            >
-              ✕
-            </button>
-          </button>
-        ))}
-        <Button variant="outline" onClick={addPage} className="rounded-full px-4 py-2">
-          + Add Page
-        </Button>
-      </div>
-
-      {/* Styling Toolbar */}
-      {selectedElement && selectedElement.type === ELEMENT_TYPES.TEXT && (
-        <div className="flex items-center gap-4 border-b p-4">
-          <Select
-            value={selectedElement.style.fontFamily}
-            onValueChange={(value: string) => handleStyleChange("fontFamily", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Font" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(selectedElement.language === "bn" ? BENGALI_FONTS : {}).map(([value, font]) => (
-                <SelectItem key={value} value={value}>
-                  {font.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Slider
-            value={[selectedElement.style.fontSize || ELEMENT_DEFAULTS.text.fontSize]}
-            onValueChange={([value]) => handleStyleChange("fontSize", value)}
-            min={8}
-            max={72}
-            step={1}
-            className="w-32"
-          />
-          <ColorPicker
-            value={selectedElement.style.color || DEFAULT_COLORS.text}
-            onChange={(value: string) => handleStyleChange("color", value)}
-          />
-          <Select
-            value={selectedElement.style.fontWeight}
-            onValueChange={(value: string) => handleStyleChange("fontWeight", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Font Weight" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="normal">Normal</SelectItem>
-              <SelectItem value="bold">Bold</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={selectedElement.style.textAlign || TEXT_ALIGNMENTS.LEFT}
-            onValueChange={(value: string) => handleStyleChange("textAlign", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Text Align" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(TEXT_ALIGNMENTS).map(([label, value]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {/* Editor Area */}
-      <DndContext
-        onDragEnd={({ active, over }) => {
-          if (over && active.id !== over.id) {
-            // Update element position
-            const element = pages[currentPage].elements.find((el) => el.id === active.id);
-            if (element) {
-              updateElement({
-                ...element,
-                style: {
-                  ...element.style,
-                  position: {
-                    x: over.rect.left - over.rect.width / 2,
-                    y: over.rect.top - over.rect.height / 2
-                  }
-                }
-              });
-            }
-          }
-        }}
-      >
-        <div className="relative flex-1 bg-gray-50 p-8">
-          <div
-            className="relative mx-auto"
-            style={{
-              width: "600px",
-              height: "800px",
-              backgroundImage: pages[currentPage]?.background ? `url(${pages[currentPage].background})` : undefined,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundColor: DEFAULT_COLORS.background
-            }}
-          >
-            {pages[currentPage]?.elements.map((element) => (
-              <DraggableElement
-                key={element.id}
-                element={element}
-                isSelected={selectedElement?.id === element.id}
-                onSelect={() => {
-                  setSelectedElement(element);
-                  setEditedContent(element.content);
-                }}
-                onDoubleClick={() => setIsEditDialogOpen(true)}
-                onDelete={() => deleteElement(element.id)}
-              />
-            ))}
+    <div className="flex h-screen">
+      {/* Editor Panel */}
+      <div className="w-96 border-r bg-gray-50 p-4">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Edit Template</h2>
+          <div className="flex gap-2">
+            <Button variant="outline" size="icon" onClick={undo} disabled={historyIndex <= 0}>
+              <Undo2 className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={redo} disabled={historyIndex >= editHistory.length - 1}>
+              <Redo2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      </DndContext>
 
-      {/* Bottom Actions */}
-      <div className="flex items-center justify-between border-t p-4">
-        <div className="flex gap-4">
-          <Button variant="outline" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <>
-                <LoadingSpinner className="mr-2 h-4 w-4" />
-                Saving...
-              </>
-            ) : (
-              "Save Draft"
-            )}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="content">
+              <Type className="mr-2 h-4 w-4" />
+              Text
+            </TabsTrigger>
+            <TabsTrigger value="style">
+              <Palette className="mr-2 h-4 w-4" />
+              Style
+            </TabsTrigger>
+            <TabsTrigger value="layout">
+              <Layout className="mr-2 h-4 w-4" />
+              Layout
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="content" className="space-y-4">
+            {/* Text editing fields */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Title</label>
+                <Input
+                  value={customization.content.title || ""}
+                  onChange={(e) => handleContentUpdate("title", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Subtitle</label>
+                <Input
+                  value={customization.content.subtitle || ""}
+                  onChange={(e) => handleContentUpdate("subtitle", e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              {/* Add more text fields as needed */}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="style" className="space-y-4">
+            {/* Style controls */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Font Family</label>
+                <Select
+                  value={customization.style.fontFamily || ""}
+                  onValueChange={(value) => handleStyleUpdate("fontFamily", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select font" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* Add your font options here */}
+                    <SelectItem value="bengali1">Bengali Font 1</SelectItem>
+                    <SelectItem value="bengali2">Bengali Font 2</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Font Size</label>
+                <Slider
+                  value={[customization.style.fontSize || 16]}
+                  min={12}
+                  max={72}
+                  step={1}
+                  onValueChange={([value]) => handleStyleUpdate("fontSize", value)}
+                />
+              </div>
+              {/* Add more style controls */}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="layout" className="space-y-4">
+            {/* Layout controls */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Spacing</label>
+                <Slider
+                  value={[customization.layout.spacing || 0]}
+                  min={0}
+                  max={100}
+                  step={1}
+                  onValueChange={([value]) => handleLayoutUpdate("spacing", value)}
+                />
+              </div>
+              {/* Add more layout controls */}
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <div className="mt-8 flex gap-4">
+          <Button className="flex-1" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? <LoadingSpinner className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
+            Save
           </Button>
-          <Button variant="outline" onClick={redo}>
-            <Redo2 className="mr-2 h-4 w-4" />
-            Redo
-          </Button>
-          <Button variant="outline" onClick={undo}>
-            <Undo2 className="mr-2 h-4 w-4" />
-            Undo
-          </Button>
-        </div>
-        <div className="flex gap-4">
-          <Button variant="secondary" onClick={handlePublish} disabled={isPublishing}>
-            {isPublishing ? (
-              <>
-                <LoadingSpinner className="mr-2 h-4 w-4" />
-                Publishing...
-              </>
-            ) : (
-              "Publish"
-            )}
+          <Button variant="secondary" className="flex-1" onClick={onPublish} disabled={isPublishing}>
+            {isPublishing ? <LoadingSpinner className="mr-2 h-4 w-4" /> : "Publish"}
           </Button>
         </div>
       </div>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Text</DialogTitle>
-          </DialogHeader>
-          <Input value={editedContent} onChange={(e) => setEditedContent(e.target.value)} className="mb-4" />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateContent}>Update</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Preview Panel */}
+      <div className="flex-1 bg-white p-8">
+        <div className="mx-auto max-w-4xl rounded-lg border shadow-lg">
+          {/* Template Preview */}
+          <div
+            className="min-h-[600px] p-8"
+            style={{
+              fontFamily: customization.style.fontFamily,
+              fontSize: `${customization.style.fontSize}px`,
+              ...customization.style
+            }}
+          >
+            <h1 className="text-center text-3xl font-bold">{customization.content.title || template.name}</h1>
+            <p className="mt-4 text-center text-xl">{customization.content.subtitle || "Add your subtitle"}</p>
+            {/* Add more template elements */}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

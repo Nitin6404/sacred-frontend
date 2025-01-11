@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Template, TemplateFilters, TemplateCustomization } from "@/types";
 // import { templateApi } from "@/lib/api/template";
-import { templateApi } from "@/components/api/templates.endpoint";
+import { getTemplateById, templateApi } from "@/components/api/templates.endpoint";
 
 export const useTemplateListMutation = () => {
   return useMutation({
@@ -27,10 +27,10 @@ export const useTemplatePublishMutation = () => {
   });
 };
 
-export const useTemplateQuery = (id: string) => {
+export const useTemplateByIdQuery = (id: string) => {
   return useQuery({
     queryKey: ["template", id],
-    queryFn: () => templateApi.getTemplate(id)
+    queryFn: () => getTemplateById(id)
   });
 };
 

@@ -2,6 +2,17 @@ import { templateEndpoints } from "@/lib/apiConfig/endpoints";
 import apiClient from "@/lib/apiConfig/apiClient";
 import { Template, TemplateCustomization, TemplateFilters, TemplateResponse } from "@/types";
 
+// export const getAllCities = () => apiClient(citiesEndpoints.getAllCities, { method: "GET" });
+
+export const getAllTemplates = () => apiClient(templateEndpoints.list, { method: "GET" });
+
+export const getTemplateById = (id: string) =>
+  apiClient(`${templateEndpoints.get}/${id}`, { method: "GET" }) as Promise<{
+    data: {
+      data: Template;
+    };
+  }>;
+
 // Template API Functions - Using apiClient for consistent error handling
 export const templateApi = {
   fetchTemplates: () =>
@@ -16,11 +27,6 @@ export const templateApi = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(filters)
     }) as Promise<TemplateResponse>,
-
-  getTemplate: (id: string) =>
-    apiClient(`${templateEndpoints.get}/${id}`, {
-      method: "GET"
-    }) as Promise<TemplateCustomization>,
 
   createTemplate: (payload: Partial<Template>) =>
     apiClient(templateEndpoints.create, {
@@ -65,11 +71,11 @@ export const templateApi = {
 
   generateTemplatePDF: (templateId: number) =>
     apiClient(`${templateEndpoints.generatePDF}/${templateId}`, {
-      method: "POST"
+      method: "GET"
     }).then((response) => response.blob()),
 
   shareTemplate: (templateId: number) =>
     apiClient(`${templateEndpoints.share}/${templateId}`, {
-      method: "POST"
+      method: "GET"
     })
 };

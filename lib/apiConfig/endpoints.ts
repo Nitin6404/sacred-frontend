@@ -116,25 +116,25 @@ export const categoryEndpoints = {
 
 export const templateEndpoints = {
   // Template management
-  list: "/api/templates",
-  get: "/api/templates",
-  create: "/api/templates",
-  update: "/api/templates",
-  delete: "/api/templates",
-  featured: "/api/templates/featured",
-  categories: "/api/templates/categories",
+  list: "/api/v1/templates",
+  get: "/api/v1/templates",
+  create: "/api/v1/templates",
+  update: "/api/v1/templates",
+  delete: "/api/v1/templates",
+  featured: "/api/v1/templates/featured",
+  categories: "/api/v1/templates/categories",
 
   // Template customization
-  customize: "/api/templates/customization",
-  preview: "/api/templates/preview",
-  generatePDF: "/api/templates/pdf",
-  publish: "/api/templates/publish",
-  share: "/api/templates/share",
+  customize: "/api/v1/templates/customization",
+  preview: "/api/v1/templates/preview",
+  generatePDF: "/api/v1/templates/pdf",
+  publish: "/api/v1/templates/publish",
+  share: "/api/v1/templates/share",
 
   // Template assets
-  uploadImage: "/api/templates/upload/image",
-  uploadFont: "/api/templates/upload/font",
-  uploadMusic: "/api/templates/upload/music"
+  uploadImage: "/api/v1/templates/upload/image",
+  uploadFont: "/api/v1/templates/upload/font",
+  uploadMusic: "/api/v1/templates/upload/music"
 } as const;
 
 export const cloudinaryUrl = `cloudinary://${process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY}:${process.env.CLOUDINARY_API_SECRET}@${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}`;

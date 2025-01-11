@@ -1,6 +1,5 @@
 import { usePaginatedFetch } from "@/hooks/usePaginatedFetch";
 import { useTemplateListMutation } from "@/app/_components/api/templates";
-import { Template } from "@/types";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { motion } from "framer-motion";
@@ -20,6 +19,8 @@ export function TemplateList({ category, searchQuery }: Props) {
       search: searchQuery
     }
   );
+
+  console.log("data from template list ", data);
 
   const container = {
     hidden: {},
@@ -50,7 +51,7 @@ export function TemplateList({ category, searchQuery }: Props) {
       >
         {data?.map((template) => (
           <motion.div variants={item} key={template.id}>
-            <TemplateCard onClick={() => {}} key={template.id} template={template as Template} />
+            <TemplateCard onClick={() => {}} key={template.id} template={template} />
           </motion.div>
         ))}
       </motion.div>

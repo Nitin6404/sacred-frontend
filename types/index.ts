@@ -101,63 +101,43 @@ export interface Blog {
 export type ElementType = "text" | "image" | "shape";
 export type Language = "en" | "bn";
 
-export interface TemplateCustomization {
-  previewImages: string[];
+export interface Template {
   id: string;
   name: string;
-  description: string;
-  category: string[];
-  languages: Language[];
-  rating: number;
-  views: number;
-  thumbnailUrl: string;
-  pages: {
-    id: string;
-    elements: {
-      id: string;
-      type: ElementType;
-      content: string;
-      style: {
-        fontFamily?: string;
-        fontSize?: number;
-        color?: string;
-        backgroundColor?: string;
-        position: {
-          x: number;
-          y: number;
-        };
-        size: {
-          width: number;
-          height: number;
-        };
-        rotation?: number;
-      };
-    }[];
-  }[];
+  description?: string;
+  thumbnailUrl?: string;
+  customization?: TemplateCustomization;
+  languages?: string[];
+  culturalElements?: string[];
 }
 
-export interface Template {
-  id: number;
-  name: string;
-  description: string;
-  thumbnailUrl: string;
-  previewImages: string[];
-  category: string[];
-  languages: Language[];
-  culturalElements?: string[];
-  isActive: boolean;
-  isFeatured: boolean;
-  tags: string[];
-  views: number;
-  rating: number;
-  previewConfig?: {
-    layout: string;
-    style: string;
-    components: any[];
+export interface TemplateCustomization {
+  templateId: string;
+  content: {
+    title?: string;
+    subtitle?: string;
+    date?: string;
+    venue?: string;
+    message?: string;
+    [key: string]: string | undefined;
   };
-  customization?: TemplateCustomization;
-  createdAt: Date;
-  updatedAt: Date;
+  style: {
+    fontFamily?: string;
+    fontSize?: number;
+    color?: string;
+    backgroundColor?: string;
+    textAlign?: "left" | "center" | "right";
+    fontWeight?: "normal" | "bold";
+    [key: string]: string | number | undefined;
+  };
+  layout: {
+    spacing?: number;
+    padding?: number;
+    margin?: number;
+    width?: number;
+    height?: number;
+    [key: string]: number | undefined;
+  };
 }
 
 export interface TemplateFilters {
@@ -176,10 +156,6 @@ export interface TemplateFilters {
 
 export interface TemplateResponse {
   templates: Template[];
-  totalCount: number;
-  currentPage: number;
-  totalPages: number;
-  hasNextPage: boolean;
 }
 
 export interface TemplateListResponse {

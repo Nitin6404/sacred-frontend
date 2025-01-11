@@ -3,19 +3,15 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Template, TemplateFilters } from "@/types";
-import { templateApi } from "@/components/api/templates.endpoint";
+import { getAllTemplates } from "@/components/api/templates.endpoint";
 import TemplateCard from "./TemplateCard";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { motion } from "framer-motion";
-import TemplatePreviewModal from "./TemplatePreviewModal";
+import { useRouter } from "next/navigation";
 
-interface TemplateGridProps {
-  onTemplateSelect?: (template: Template) => void;
-}
-
-export function TemplateGrid({ onTemplateSelect }: TemplateGridProps = {}) {
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+export function TemplateGrid() {
+  const router = useRouter();
   const [filters, setFilters] = useState<TemplateFilters>({
     page: 1,
     pageSize: 12,
@@ -25,22 +21,17 @@ export function TemplateGrid({ onTemplateSelect }: TemplateGridProps = {}) {
 
   const { data, isLoading, error, isFetching } = useQuery({
     queryKey: ["templates", filters],
-    queryFn: () => templateApi.fetchTemplates()
+    queryFn: () => getAllTemplates()
   });
 
-  // console.log("filters", filters);
+  // console.log("data from template grid ", data);
+  console.log("data?.data.rows", data?.data.data.rows);
 
-  console.log("query result", data, isLoading, error, isFetching);
-
-  const templates = data?.templates || [];
-  const hasMore = data?.hasNextPage || false;
+  const templates: Template[] = data?.data.data.rows || [];
+  const hasMore = data?.data.hasNextPage || false;
 
   const handleTemplateClick = (templateId: string) => {
-    setSelectedTemplate(templateId);
-    const template = templates.find((t) => t.id.toString() === templateId);
-    if (template && onTemplateSelect) {
-      onTemplateSelect(template);
-    }
+    router.push(`/templates/${templateId}`);
   };
 
   const handleLoadMore = () => {
@@ -83,14 +74,6 @@ export function TemplateGrid({ onTemplateSelect }: TemplateGridProps = {}) {
             </div>
           )}
         </>
-      )}
-
-      {selectedTemplate && (
-        <TemplatePreviewModal
-          templateId={selectedTemplate}
-          isOpen={!!selectedTemplate}
-          onClose={() => setSelectedTemplate(null)}
-        />
       )}
     </div>
   );
