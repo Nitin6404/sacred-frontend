@@ -61,35 +61,6 @@ export interface Music {
   };
 }
 
-export interface TemplateCustomization {
-  pages: Page[];
-  music?: Music;
-}
-
-export interface Template {
-  id: number;
-  name: string;
-  description: string;
-  thumbnailUrl: string;
-  previewImages: string[];
-  category: string[];
-  languages: Language[];
-  culturalElements?: string[];
-  isActive: boolean;
-  isFeatured: boolean;
-  tags: string[];
-  views: number;
-  rating: number;
-  previewConfig?: {
-    layout: string;
-    style: string;
-    components: any[];
-  };
-  customization: TemplateCustomization | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 export interface EditorState {
   pages: Page[];
   currentPage: number;

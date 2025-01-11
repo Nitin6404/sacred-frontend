@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { ColumnDef } from "@tanstack/react-table";
 import { PlusCircle } from "lucide-react";
-import { Template } from "@/types/template";
+import { Template } from "@/types";
 import { TemplateDialog } from "./_components/template-dialog";
 import { templateColumns } from "./_components/columns";
 

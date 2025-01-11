@@ -57,10 +57,13 @@ export const templateApi = {
       method: "GET"
     }) as Promise<string[]>,
 
-  saveTemplateCustomization: (data: TemplateCustomization) =>
+  saveTemplateCustomization: (accessToken: string, data: TemplateCustomization) =>
     apiClient(templateEndpoints.customize, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`
+      },
       body: JSON.stringify(data)
     }),
 

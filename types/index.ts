@@ -106,6 +106,22 @@ export interface Template {
   name: string;
   description?: string;
   thumbnailUrl?: string;
+  previewImages?: string[];
+  category?: string[];
+  isActive?: boolean;
+  isFeatured?: boolean;
+  tags?: string[];
+  rating?: number;
+  views?: number;
+  previewUrl?: string;
+  previewConfig?: {
+    layout: string;
+    style: string;
+    components: any[];
+  };
+  layout: string;
+  style: string;
+  components: any[];
   customization?: TemplateCustomization;
   languages?: string[];
   culturalElements?: string[];

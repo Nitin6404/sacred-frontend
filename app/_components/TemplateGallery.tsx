@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { getAllTemplates } from "@/components/api/templates.endpoint";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TemplateCardProps {
   template: Template;
@@ -64,6 +65,31 @@ const TemplateCard = ({ template }: TemplateCardProps) => {
   );
 };
 
+const TemplateCardSkeleton = () => {
+  return (
+    <Card className="relative overflow-hidden bg-white p-4">
+      {/* Template Preview Skeleton */}
+      <Skeleton className="aspect-[3/4] w-full rounded-lg" />
+
+      {/* Template Info Skeleton */}
+      <div className="mt-4 space-y-2">
+        <Skeleton className="h-6 w-3/4" />
+
+        <div className="flex flex-wrap gap-2">
+          <Skeleton className="h-5 w-20" />
+          <Skeleton className="h-5 w-24" />
+        </div>
+
+        {/* Template Details Skeleton */}
+        <div className="flex items-center justify-between pt-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-8 rounded-full" />
+        </div>
+      </div>
+    </Card>
+  );
+};
+
 export function TemplateGallery() {
   const { data, isLoading } = useQuery({
     queryKey: ["templates"],
@@ -75,17 +101,14 @@ export function TemplateGallery() {
   return (
     <section className="container py-16">
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {templates.map((template) => (
-          <TemplateCard key={template.id} template={template} />
-        ))}
+        {isLoading
+          ? Array(8)
+              .fill(0)
+              .map((_, index) => <TemplateCardSkeleton key={index} />)
+          : templates.map((template) => <TemplateCard key={template.id} template={template} />)}
       </div>
 
-      {isLoading && (
-        <div className="flex items-center justify-center py-12">
-          <div className="rounded-f-lg h-32 w-32 animate-spin border-4 border-primary border-t-transparent" />
-        </div>
-      )}
-      <div className="flex justify-center">
+      <div className="mt-12 flex justify-center">
         <Link href="/templates">
           <Button variant="outline" size="lg">
             View All Templates
